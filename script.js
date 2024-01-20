@@ -1,6 +1,7 @@
 const itemForm = document.getElementById("item-form");
 const itemInput = document.getElementById("item-input");
 const itemList = document.getElementById("item-list");
+const clearBtn = document.getElementById("clear-btn");
 
 function addItem(event) {
   event.preventDefault();
@@ -8,6 +9,7 @@ function addItem(event) {
 
   if (newItem === "") {
     alert("Please add an item");
+    return;
   }
 
   // Create new list element
@@ -38,4 +40,26 @@ function createBtn() {
   return button;
 }
 
+function deleteItem(event) {
+  const listItems = event.target;
+
+  if (
+    listItems.classList.contains("delete-btn") ||
+    listItems.classList.contains("fa-xmark")
+  ) {
+    listItems.parentElement.parentElement.remove();
+  }
+}
+
+// Clear All items
+function clearAllItems() {
+  listItem = itemList.lastElementChild;
+  while (listItem) {
+    itemList.removeChild(listItem);
+    listItem = itemList.lastElementChild;
+  }
+}
+
 itemForm.addEventListener("submit", addItem);
+itemList.addEventListener("click", deleteItem);
+clearBtn.addEventListener("click", clearAllItems);
