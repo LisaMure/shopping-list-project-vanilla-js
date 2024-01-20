@@ -2,6 +2,8 @@ const itemForm = document.getElementById("item-form");
 const itemInput = document.getElementById("item-input");
 const itemList = document.getElementById("item-list");
 const clearBtn = document.getElementById("clear-btn");
+const filterInput = document.getElementById("filter-input");
+const filterForm = document.getElementById("filter-form");
 
 function addItem(event) {
   event.preventDefault();
@@ -25,6 +27,7 @@ function addItem(event) {
 
   // Clear input field
   itemInput.value = "";
+  resetUI();
 }
 
 function createBtn() {
@@ -49,6 +52,7 @@ function deleteItem(event) {
   ) {
     listItems.parentElement.parentElement.remove();
   }
+  resetUI();
 }
 
 // Clear All items
@@ -58,8 +62,39 @@ function clearAllItems() {
     itemList.removeChild(listItem);
     listItem = itemList.lastElementChild;
   }
+  resetUI();
+}
+
+function filterItems(event) {
+  event.preventDefault();
+  listItems = itemList.querySelectorAll("li");
+  filterLetter = filterInput.value.toLowerCase();
+
+  for (let i = 0; i < listItems.length; i++) {
+    let listItemsText = listItems[i].textContent.toLowerCase();
+
+    if (listItemsText.includes(filterLetter)) {
+      listItems[i].style.display = "block";
+    } else {
+      listItems[i].style.display = "none";
+    }
+  }
+}
+
+function resetUI() {
+  if (itemList.childNodes.length === 0) {
+    filterInput.style.display = "none";
+    clearBtn.style.display = "none";
+  } else {
+    filterInput.style.display = "block";
+    clearBtn.style.display = "block";
+  }
 }
 
 itemForm.addEventListener("submit", addItem);
 itemList.addEventListener("click", deleteItem);
 clearBtn.addEventListener("click", clearAllItems);
+filterInput.addEventListener("input", filterItems);
+document.addEventListener("DOMContentLoad", resetUI);
+
+resetUI();
