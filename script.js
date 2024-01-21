@@ -5,6 +5,7 @@ const clearBtn = document.getElementById("clear-btn");
 const addItemsBtn = document.getElementById("add-items-btn");
 const filterInput = document.getElementById("filter-input");
 const filterForm = document.getElementById("filter-form");
+let isEditMode = false;
 
 // Load Items in Local Storage
 function loadItemsInLocalStorage() {
@@ -24,6 +25,21 @@ function addItem(event) {
     alert("Please add an item");
     return;
   }
+
+  if (isEditMode) {
+    const itemtoEdit = itemList.querySelector(".edit-mode");
+    removeFromLocalStorage(itemtoEdit.textContent);
+    itemtoEdit.remove();
+    isEditMode = false;
+    setToDefaultMode();
+  } else {
+    if (checkIfItemExists(newItem)) {
+      alert("Item already exists");
+      itemInput.value = "";
+      return;
+    }
+  }
+
   addItemsToLocalStorage(newItem);
   displayItems(newItem);
 
@@ -77,6 +93,12 @@ function addItemsToLocalStorage(items) {
   localStorage.setItem("item", JSON.stringify(itemsArray));
 }
 
+// Check if Item Exists
+function checkIfItemExists(item) {
+  const itemsArray = getItemsInLocalStorage();
+  return itemsArray.includes(item);
+}
+
 // Handle clicked list item
 function onItemClick(event) {
   const listItems = event.target;
@@ -87,6 +109,12 @@ function onItemClick(event) {
     listItems.classList.contains("fa-xmark")
   ) {
     deleteItem(listItem, item);
+  } else {
+    if (listItems.tagName === "LI") {
+      setToEditMode(listItems);
+    } else {
+      setToDefaultMode();
+    }
   }
 }
 
@@ -139,8 +167,40 @@ function filterItems(event) {
   }
 }
 
+// Set to Edit Mode
+function setToEditMode(listItems) {
+  isEditMode = true;
+
+  const liElements = itemList.querySelectorAll("li");
+
+  liElements.forEach((li) => {
+    if (li === listItems) {
+      listItems.classList.add("edit-mode");
+      itemInput.value = listItems.textContent;
+
+      // Update form button
+      addItemsBtn.style.background = "#090950";
+      addItemsBtn.innerHTML = `<i class="fa-solid fa-pen-to-square fa-lg"></i> Update Item`;
+    } else {
+      li.classList.remove("edit-mode");
+    }
+  });
+}
+
+// Set to Default Mode
+function setToDefaultMode() {
+  const liElements = itemList.querySelectorAll("li");
+  liElements.forEach((li) => {
+    li.style.color = "#333339";
+  });
+
+  addItemsBtn.innerHTML = `<i class="fa-solid fa-plus fa-lg"></i> Add Items`; // Fix the closing tag
+  addItemsBtn.style.backgroundColor = "#046252";
+}
+
 // Reset the User Interface
 function resetUI() {
+  itemInput.value = "";
   if (itemList.childNodes.length === 0) {
     filterInput.style.display = "none";
     clearBtn.style.display = "none";

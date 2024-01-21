@@ -74,7 +74,6 @@ li,
 
 li {
   color: #333339;
-  /* color: #98989c; */
   font-family: "Poppins", sans-serif;
   font-weight: 700;
   width: 40%;
@@ -103,6 +102,11 @@ li {
 .filter-text {
   color: red;
   font-family: "Poppins", sans-serif;
+}
+
+/* Edit mode */
+.edit-mode {
+  color: #98989c;
 }
 
 @media (max-width: 500px) {
