@@ -4,19 +4,18 @@ const itemList = document.getElementById("item-list");
 const clearBtn = document.getElementById("clear-btn");
 const addItemsBtn = document.getElementById("add-items-btn");
 const filterInput = document.getElementById("filter-input");
-const filterForm = document.getElementById("filter-form");
 let isEditMode = false;
 
-// Load Items in Local Storage
+// Load items in Local Storage
 function loadItemsInLocalStorage() {
   const itemsArray = getItemsInLocalStorage();
   itemsArray.forEach((item) => {
     displayItems(item);
-    resetUI();
   });
+  resetUI();
 }
 
-// Add Items
+// Add items to list and Local Storage
 function addItem(event) {
   event.preventDefault();
   const newItem = itemInput.value;
@@ -26,42 +25,47 @@ function addItem(event) {
     return;
   }
 
-  if (isEditMode) {
-    const itemtoEdit = itemList.querySelector(".edit-mode");
-    removeFromLocalStorage(itemtoEdit.textContent);
-    itemtoEdit.remove();
-    isEditMode = false;
-    setToDefaultMode();
-  } else {
-    if (checkIfItemExists(newItem)) {
-      alert("Item already exists");
-      itemInput.value = "";
-      return;
-    }
+  if (checkIfItemExists(newItem)) {
+    alert("Item already exists");
+    itemInput.value = "";
+    return;
   }
 
+  updateEditedItems(newItem);
+
   addItemsToLocalStorage(newItem);
+
   displayItems(newItem);
 
   // Clear input field
   itemInput.value = "";
+
   resetUI();
 }
 
-// Display Items to DOM
+// Display items to DOM
 function displayItems(newItem) {
   // Create new list element
   const li = document.createElement("li");
+
+  // Checkbox
+  const checkbox = createCheckbox(newItem);
+  li.appendChild(checkbox);
+
+  if (localStorage.getItem(`checkbox-${newItem}`) === "checked") {
+    checkbox.checked = true;
+    li.style.textDecoration = "line-through";
+  }
+
   li.appendChild(document.createTextNode(newItem));
 
-  // Create new button and icon elements
   const button = createBtn();
 
-  //Append elements
   li.appendChild(button);
   itemList.appendChild(li);
 }
 
+// Create button with icon 
 function createBtn() {
   const button = document.createElement("button");
   button.classList.add("delete-btn");
@@ -75,7 +79,57 @@ function createBtn() {
   return button;
 }
 
-// Get Items from Local Storage
+// Create a checkbox 
+function createCheckbox(itemName) {
+  let checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.id = `check-${itemName}`;
+  return checkbox;
+}
+
+//  Handle checkbox when clicked
+function handleCheckbox(event) {
+  if (event.target.type === "checkbox") {
+    const checkbox = event.target;
+    const li = checkbox.parentElement;
+    const item = li.textContent;  
+
+    if (checkbox.checked) {
+      li.style.textDecoration = "line-through";
+      localStorage.setItem(`checkbox-${item}`, "checked");
+    } else {
+      li.style.textDecoration = "none";
+      localStorage.removeItem(`checkbox-${item}`);
+    }
+  }
+
+   // Check if the item is in edit mode
+   if (!li.classList.contains("edit-mode")) {
+    localStorage.removeItem(`checkbox-${item}`);
+  }
+}
+
+
+// Update items in Edit Mode
+function updateEditedItems() {
+  if (isEditMode) {
+    const itemtoEdit = itemList.querySelector(".edit-mode");
+    const item = itemtoEdit.textContent;
+    const isChecked = localStorage.getItem(`checkbox-${item}`) === "checked";
+    removeFromLocalStorage(item);
+
+    if (isChecked) {
+      localStorage.removeItem(`checkbox-${item}`);
+    }
+
+    itemtoEdit.remove();
+
+    isEditMode = false;
+    setToDefaultMode();
+  }
+}
+
+// Get items from Local Storage
 function getItemsInLocalStorage() {
   let itemsArray;
   if (localStorage.getItem("item")) {
@@ -86,20 +140,24 @@ function getItemsInLocalStorage() {
   return itemsArray;
 }
 
-// Add Items to Local Storage
+// Add items to Local Storage
 function addItemsToLocalStorage(items) {
   const itemsArray = getItemsInLocalStorage();
   itemsArray.push(items);
   localStorage.setItem("item", JSON.stringify(itemsArray));
 }
 
-// Check if Item Exists
+// Check if item exists in Local Storage
 function checkIfItemExists(item) {
   const itemsArray = getItemsInLocalStorage();
-  return itemsArray.includes(item);
+  const itemExistsInArray = itemsArray.includes(item);
+  const itemExistsInCheckedArray =
+    localStorage.getItem(`checkbox-${item}`) === "checked";
+
+  return itemExistsInArray || itemExistsInCheckedArray;
 }
 
-// Handle clicked list item
+// Handle clicked items
 function onItemClick(event) {
   const listItems = event.target;
   const listItem = listItems.parentElement.parentElement;
@@ -118,41 +176,49 @@ function onItemClick(event) {
   }
 }
 
-// Delete Items
+// Delete items
 function deleteItem(listItem, item) {
-  // Delete Items from list
+  const isChecked = localStorage.getItem(`checkbox-${item}`) === "checked";
+
+  // Delete items from list
   if (confirm("Are you sure you want to delete this item?")) {
     listItem.remove();
   }
-  // Delete Items from Storage
+
+  // Delete items from Storage
   removeFromLocalStorage(item);
+
+  // If item is checked, delete from Storage
+  if (isChecked) {
+    localStorage.removeItem(`checkbox-${item}`);
+  }
 
   resetUI();
 }
 
-// Remove Items from Local Storage
+// Remove items from Local Storage
 function removeFromLocalStorage(item) {
   let itemsArray = getItemsInLocalStorage();
   itemsArray = itemsArray.filter((storedItem) => storedItem !== item);
   localStorage.setItem("item", JSON.stringify(itemsArray));
 }
 
-// Clear All items from List
+// Clear all items from list
 function clearAllItems() {
-  listItem = itemList.lastElementChild;
+  let listItem = itemList.lastElementChild;
   while (listItem) {
     itemList.removeChild(listItem);
     listItem = itemList.lastElementChild;
-    localStorage.removeItem("item");
   }
+  localStorage.removeItem("item");
   resetUI();
 }
 
-// Filter Items
+// Filter items
 function filterItems(event) {
   event.preventDefault();
-  listItems = itemList.querySelectorAll("li");
-  filterLetter = filterInput.value.toLowerCase();
+  const listItems = itemList.querySelectorAll("li");
+  const filterLetter = filterInput.value.toLowerCase();
 
   for (let i = 0; i < listItems.length; i++) {
     let listItemsText = listItems[i].textContent.toLowerCase();
@@ -196,11 +262,14 @@ function setToDefaultMode() {
 
   addItemsBtn.innerHTML = `<i class="fa-solid fa-plus fa-lg"></i> Add Items`; // Fix the closing tag
   addItemsBtn.style.backgroundColor = "#046252";
+
+  resetUI();
 }
 
 // Reset the User Interface
 function resetUI() {
   itemInput.value = "";
+
   if (itemList.childNodes.length === 0) {
     filterInput.style.display = "none";
     clearBtn.style.display = "none";
@@ -212,9 +281,8 @@ function resetUI() {
 
 itemForm.addEventListener("submit", addItem);
 itemList.addEventListener("click", onItemClick);
+itemList.addEventListener("change", handleCheckbox);
 clearBtn.addEventListener("click", clearAllItems);
 filterInput.addEventListener("input", filterItems);
 document.addEventListener("DOMContentLoaded", loadItemsInLocalStorage);
-document.addEventListener("DOMContentLoad", resetUI);
-
-resetUI();
+document.addEventListener("DOMContentLoaded", resetUI);

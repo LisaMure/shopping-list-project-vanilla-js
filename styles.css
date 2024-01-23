@@ -109,6 +109,12 @@ li {
   color: #98989c;
 }
 
+
+/* Checkbox */
+input[type="checkbox"]:checked {
+  filter: grayscale(100%) invert(20%); 
+}
+
 @media (max-width: 500px) {
   li,
   .clear-btn {
